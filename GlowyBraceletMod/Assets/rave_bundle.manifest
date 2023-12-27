@@ -1,0 +1,51 @@
+ManifestFileVersion: 0
+CRC: 761231497
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: f2ed2df2c92de9e9ef4162e97593e418
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: ff03c10aa8cc1960072bf73c0e97314a
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 23
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 33
+  Script: {instanceID: 0}
+- Class: 43
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 65
+  Script: {instanceID: 0}
+- Class: 82
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 3d7fee243786b7a43aeb607db88d4b36, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: b1b08527c1af2394f9f1833f3c745a6b, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 6e08224a0c172cf49b787f8bc8d72094, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 034b758dcb27c9746a7640cdb345b333, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: a5d1f69d626d8134fbd71388d008bcc6, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 169
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/GlowstickAssets/bracelet.prefab
+- Assets/GlowstickAssets/glow.prefab
+- Assets/GlowstickAssets/crate.prefab
+Dependencies: []
