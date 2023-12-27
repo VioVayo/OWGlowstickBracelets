@@ -7,6 +7,7 @@ namespace GlowyBraceletMod
     public class GlowyBraceletMod : ModBehaviour
     {
         private GameObject braceletPrefab, glowPrefab, cratePrefab;
+        private ScreenPrompt prompt;
         private Material glowyMaterial;
         private Transform[] parentTransforms;
 
@@ -40,6 +41,7 @@ namespace GlowyBraceletMod
                 glowing = false;
 
                 if (loadScene != OWScene.SolarSystem) return;
+                prompt ??= new ScreenPrompt(InputLibrary.interact, "<CMD> " + "Make Bracelet");
                 glowyMaterial ??= Resources.FindObjectsOfTypeAll<Material>().FirstOrDefault(obj => obj.name == "Props_HEA_BlueLightbulb_mat");
                 parentTransforms = GameObject.Find("Player_Body").GetComponentsInChildren<Transform>().Where(obj => obj.gameObject.name.Contains("_Arm_Elbow_Jnt")).ToArray();
 
@@ -48,7 +50,7 @@ namespace GlowyBraceletMod
                 crate.transform.localPosition = new(2.15f, 1.97f, -1f);
                 crate.transform.localEulerAngles = new(0, 12, 0);
                 var receiver = crate.GetComponent<InteractReceiver>();
-                receiver._screenPrompt = new ScreenPrompt(InputLibrary.interact, "<CMD> " + "Make Bracelet");
+                receiver._screenPrompt = prompt;
                 receiver.OnPressInteract += AddBracelet;
                 receiver.OnPressInteract += receiver.GetComponent<OWAudioSource>().PlayOneShot;
                 receiver.OnReleaseInteract += receiver.ResetInteraction;
