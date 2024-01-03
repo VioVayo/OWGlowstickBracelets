@@ -28,8 +28,20 @@ namespace GlowyBraceletMod
             new Color(1.5f, 0.71f, 0.53f, 1) //oarnch
         };
 
+        //VR stuff
+        private bool vREnabled;
+        private Transform[] parentTransformsVR;
+        private (Vector3, Vector3)
+            minMaxPosLFSuitVR = (new(-0.004f, 0.001f, 0.012f), new(0.004f, 0.003f, -0.033f)),
+            minMaxPosRTSuitVR = (new(0.004f, 0.001f, 0.012f), new(0.004f, 0.003f, -0.033f)),
+            minMaxPosLFVR = (new(0.011f, 0.001f, 0.02f), new(-0.011f, 0.001f, -0.03f)),
+            minMaxPosRTVR = (new(-0.011f, 0.001f, 0.02f), new(-0.011f, 0.001f, -0.03f));
+
+
         private void Start()
         {
+            vREnabled = ModHelper.Interaction.ModExists("Raicuparta.NomaiVR");
+
             var bundle = ModHelper.Assets.LoadBundle("Assets/rave_bundle");
             braceletPrefab = bundle.LoadAsset<GameObject>("Assets/GlowstickAssets/bracelet.prefab");
             glowPrefab = bundle.LoadAsset<GameObject>("Assets/GlowstickAssets/glow.prefab");
@@ -44,6 +56,7 @@ namespace GlowyBraceletMod
                 prompt ??= new ScreenPrompt(InputLibrary.interact, "<CMD> " + "Make Bracelet");
                 glowyMaterial ??= Resources.FindObjectsOfTypeAll<Material>().FirstOrDefault(obj => obj.name == "Props_HEA_BlueLightbulb_mat");
                 parentTransforms = GameObject.Find("Player_Body").GetComponentsInChildren<Transform>().Where(obj => obj.gameObject.name.Contains("_Arm_Elbow_Jnt")).ToArray();
+                parentTransformsVR = vREnabled ? new[] { GameObject.Find("VrLeftHand").transform, GameObject.Find("VrRightHand").transform } : null;
 
                 var crate = Instantiate(cratePrefab);
                 crate.transform.SetParent(GameObject.Find("Module_Supplies").transform);
@@ -83,8 +96,8 @@ namespace GlowyBraceletMod
         {
             var armIndex = Random.Range(0, parentTransforms.Length);
             var slide = Random.Range(0f, 1f);
-            var maxTilt = ((slide < 0.1f) ? 0.5f : 1) * maxTiltAngle;
-            var maxOffset = ((slide < 0.1f) ? 0.5f : 1) * maxCenterOffset;
+            var maxTilt = ((slide < 0.15f) ? 0.5f : 1) * maxTiltAngle;
+            var maxOffset = ((slide < 0.15f) ? 0.5f : 1) * maxCenterOffset;
 
             var isOnLeft = parentTransforms[armIndex].gameObject.name.Contains("LF");
             var minPosSuit = isOnLeft ? minMaxPosLFSuit.Item1 : minMaxPosRTSuit.Item1;
@@ -111,11 +124,39 @@ namespace GlowyBraceletMod
             bracelet.transform.Find("glowy").gameObject.GetComponent<MeshRenderer>().material = glowyMaterial;
             bracelet.transform.GetComponentInChildren<OWEmissiveRenderer>().SetEmissionColor(colours[Random.Range(0, colours.Length)]);
 
+            if (vREnabled && slide < 0.3f) AddVRBracelet(bracelet, isOnLeft, slide, offset);
+
             if (!glowing)
             {
                 Instantiate(glowPrefab, GameObject.Find("Player_Body").transform);
                 glowing = true;
             }
+        }
+
+        private void AddVRBracelet(GameObject bracelet, bool isOnLeft, float slide, Vector3 offset)
+        {
+            var armIndex = isOnLeft ? 0 : 1;
+            var minPosSuit = isOnLeft ? minMaxPosLFSuitVR.Item1 : minMaxPosRTSuitVR.Item1;
+            var maxPosSuit = isOnLeft ? minMaxPosLFSuitVR.Item2 : minMaxPosRTSuitVR.Item2;
+            var minPos = isOnLeft ? minMaxPosLFVR.Item1 : minMaxPosRTVR.Item1;
+            var maxPos = isOnLeft ? minMaxPosLFVR.Item2 : minMaxPosRTVR.Item2;
+
+            var rot = Quaternion.FromToRotation((isOnLeft ? 1 : -1) * bracelet.transform.parent.up, parentTransformsVR[armIndex].right)
+                * Quaternion.FromToRotation(bracelet.transform.parent.right, parentTransformsVR[armIndex].forward);
+
+            var braceletVR = Instantiate(bracelet);
+            braceletVR.transform.SetParent(parentTransformsVR[armIndex]);
+            braceletVR.transform.localRotation = bracelet.transform.localRotation;
+            braceletVR.transform.rotation = rot * braceletVR.transform.rotation;
+
+            var braceletComponent = braceletVR.GetComponent<GlowyBracelet>();
+            slide /= 0.3f;
+            offset = (rot * offset) / 12;
+            braceletComponent.posSuit = minPosSuit + slide * (maxPosSuit - minPosSuit) + 0.5f * offset;
+            braceletComponent.pos = minPos + slide * (maxPos - minPos) + offset;
+            braceletComponent.scaleSuit = 0.925f;
+            braceletComponent.scale = slide < 0.6f ? 0.5f : 0;
+            braceletComponent.UpdatePosition(PlayerState.IsWearingSuit());
         }
 
         private class GlowyBracelet : MonoBehaviour
