@@ -1,4 +1,5 @@
 ﻿using OWML.ModHelper;
+using System.Collections;
 using System.Linq;
 using UnityEngine;
 
@@ -56,7 +57,7 @@ namespace GlowyBraceletMod
                 prompt ??= new ScreenPrompt(InputLibrary.interact, "<CMD> " + "Make Bracelet");
                 glowyMaterial ??= Resources.FindObjectsOfTypeAll<Material>().FirstOrDefault(obj => obj.name == "Props_HEA_BlueLightbulb_mat");
                 parentTransforms = GameObject.Find("Player_Body").GetComponentsInChildren<Transform>().Where(obj => obj.gameObject.name.Contains("_Arm_Elbow_Jnt")).ToArray();
-                parentTransformsVR = vREnabled ? new[] { GameObject.Find("VrLeftHand").transform, GameObject.Find("VrRightHand").transform } : null;
+                if (vREnabled) StartCoroutine(FindVRHands());
 
                 var crate = Instantiate(cratePrefab);
                 crate.transform.SetParent(GameObject.Find("Module_Supplies").transform);
@@ -90,6 +91,12 @@ namespace GlowyBraceletMod
                 }
                 else material.shader = replacementShader;
             }
+        }
+
+        private IEnumerator FindVRHands()
+        {
+            yield return null;
+            parentTransformsVR = new[] { GameObject.Find("VrLeftHand").transform, GameObject.Find("VrRightHand").transform };
         }
 
         private void AddBracelet()
