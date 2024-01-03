@@ -35,8 +35,8 @@ namespace GlowyBraceletMod
         private (Vector3, Vector3)
             minMaxPosLFSuitVR = (new(-0.004f, 0.001f, 0.012f), new(0.004f, 0.003f, -0.033f)),
             minMaxPosRTSuitVR = (new(0.004f, 0.001f, 0.012f), new(0.004f, 0.003f, -0.033f)),
-            minMaxPosLFVR = (new(0.011f, 0.001f, 0.02f), new(-0.011f, 0.001f, -0.03f)),
-            minMaxPosRTVR = (new(-0.011f, 0.001f, 0.02f), new(-0.011f, 0.001f, -0.03f));
+            minMaxPosLFVR = (new(0.011f, 0.001f, 0.02f), new(-0.011f, 0.001f, -0.01f)),
+            minMaxPosRTVR = (new(-0.011f, 0.001f, 0.02f), new(-0.011f, 0.001f, -0.01f));
 
 
         private void Start()
@@ -96,13 +96,17 @@ namespace GlowyBraceletMod
         private IEnumerator FindVRHands()
         {
             yield return null;
-            parentTransformsVR = new[] { GameObject.Find("VrLeftHand").transform, GameObject.Find("VrRightHand").transform };
+            parentTransformsVR = new[] 
+            { 
+                GameObject.Find("VrLeftHand").transform.Find("skeletal_hand(Clone)"), 
+                GameObject.Find("VrRightHand").transform.Find("skeletal_hand(Clone)") 
+            };
         }
 
         private void AddBracelet()
         {
             var armIndex = Random.Range(0, parentTransforms.Length);
-            var slide = Random.Range(0f, 1f);
+            var slide = Random.Range(0f, vREnabled ? 0.3f : 1f);
             var maxTilt = ((slide < 0.15f) ? 0.5f : 1) * maxTiltAngle;
             var maxOffset = ((slide < 0.15f) ? 0.5f : 1) * maxCenterOffset;
 
@@ -128,10 +132,11 @@ namespace GlowyBraceletMod
             braceletComponent.scale = 9;
             braceletComponent.UpdatePosition(PlayerState.IsWearingSuit());
 
+            var colour = colours[Random.Range(0, colours.Length)];
             bracelet.transform.Find("glowy").gameObject.GetComponent<MeshRenderer>().material = glowyMaterial;
-            bracelet.transform.GetComponentInChildren<OWEmissiveRenderer>().SetEmissionColor(colours[Random.Range(0, colours.Length)]);
+            bracelet.transform.GetComponentInChildren<OWEmissiveRenderer>().SetEmissionColor(colour);
 
-            if (vREnabled && slide < 0.3f) AddVRBracelet(bracelet, isOnLeft, slide, offset);
+            if (vREnabled) AddVRBracelet(bracelet, isOnLeft, slide, offset, colour);
 
             if (!glowing)
             {
@@ -140,7 +145,7 @@ namespace GlowyBraceletMod
             }
         }
 
-        private void AddVRBracelet(GameObject bracelet, bool isOnLeft, float slide, Vector3 offset)
+        private void AddVRBracelet(GameObject bracelet, bool isOnLeft, float slide, Vector3 offset, Color colour)
         {
             var armIndex = isOnLeft ? 0 : 1;
             var minPosSuit = isOnLeft ? minMaxPosLFSuitVR.Item1 : minMaxPosRTSuitVR.Item1;
@@ -162,8 +167,11 @@ namespace GlowyBraceletMod
             braceletComponent.posSuit = minPosSuit + slide * (maxPosSuit - minPosSuit) + 0.5f * offset;
             braceletComponent.pos = minPos + slide * (maxPos - minPos) + offset;
             braceletComponent.scaleSuit = 0.925f;
-            braceletComponent.scale = slide < 0.6f ? 0.5f : 0;
+            braceletComponent.scale = 0.5f;
             braceletComponent.UpdatePosition(PlayerState.IsWearingSuit());
+
+            braceletVR.transform.Find("glowy").gameObject.GetComponent<MeshRenderer>().material = glowyMaterial;
+            braceletVR.transform.GetComponentInChildren<OWEmissiveRenderer>().SetEmissionColor(colour);
         }
 
         private class GlowyBracelet : MonoBehaviour
