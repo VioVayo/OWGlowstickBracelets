@@ -11,6 +11,10 @@ namespace GlowyBraceletMod
         private ScreenPrompt prompt;
         private Material glowyMaterial;
         private Transform[] parentTransforms;
+        private static GameObject armL, armR;
+        private static bool isVisibleL, isVisibleR, wasVisibleL, wasVisibleR;
+
+        public static event System.Action<bool> VisibilityChangedL, VisibilityChangedR;
 
         private bool glowing = false;
 
@@ -56,7 +60,13 @@ namespace GlowyBraceletMod
                 if (loadScene != OWScene.SolarSystem) return;
                 prompt ??= new ScreenPrompt(InputLibrary.interact, "<CMD> " + "Make Bracelet");
                 glowyMaterial ??= Resources.FindObjectsOfTypeAll<Material>().FirstOrDefault(obj => obj.name == "Props_HEA_BlueLightbulb_mat");
-                parentTransforms = GameObject.Find("Player_Body").GetComponentsInChildren<Transform>().Where(obj => obj.gameObject.name.Contains("_Arm_Elbow_Jnt")).ToArray();
+
+                var playerObject = GameObject.Find("Player_Body");
+                parentTransforms = playerObject.GetComponentsInChildren<Transform>().Where(obj => obj.gameObject.name.Contains("_Arm_Elbow_Jnt")).ToArray();
+                armL = playerObject.transform.Find("Traveller_HEA_Player_v2/player_mesh_noSuit:Traveller_HEA_Player/player_mesh_noSuit:Player_LeftArm").gameObject;
+                armR = playerObject.transform.Find("Traveller_HEA_Player_v2/player_mesh_noSuit:Traveller_HEA_Player/player_mesh_noSuit:Player_RightArm").gameObject;
+                //both suited and unsuited arms are changed together everywhere I've seen so far, so just one works to check visibility on
+
                 //if (vREnabled) StartCoroutine(FindVRHands());
 
                 var crate = Instantiate(cratePrefab);
@@ -120,6 +130,7 @@ namespace GlowyBraceletMod
             braceletComponent.pos = minPos + slide * (maxPos - minPos) + offset;
             braceletComponent.scaleSuit = 15 + slide * 2;
             braceletComponent.scale = 9;
+            braceletComponent.isOnLeft = isOnLeft;
             braceletComponent.UpdatePosition(PlayerState.IsWearingSuit());
 
             var colour = colours[Random.Range(0, colours.Length)];
@@ -133,6 +144,19 @@ namespace GlowyBraceletMod
                 Instantiate(glowPrefab, GameObject.Find("Player_Body").transform);
                 glowing = true;
             }
+        }
+
+        private void Update()
+        {
+            if (armR == null || armL == null) return;
+
+            isVisibleL = armL.layer != LayerMask.NameToLayer("VisibleToProbe");
+            if (isVisibleL != wasVisibleL) VisibilityChangedL?.Invoke(isVisibleL);
+            wasVisibleL = isVisibleL;
+
+            isVisibleR = armR.layer != LayerMask.NameToLayer("VisibleToProbe");
+            if (isVisibleR != wasVisibleR) VisibilityChangedR?.Invoke(isVisibleR);
+            wasVisibleR = isVisibleR;
         }
 
 
@@ -170,6 +194,7 @@ namespace GlowyBraceletMod
             braceletComponent.pos = minPos + slide * (maxPos - minPos) + offset;
             braceletComponent.scaleSuit = 0.925f;
             braceletComponent.scale = 0.5f;
+            braceletComponent.isOnLeft = isOnLeft;
             braceletComponent.UpdatePosition(PlayerState.IsWearingSuit());
 
             braceletVR.transform.Find("glowy").gameObject.GetComponent<MeshRenderer>().material = glowyMaterial;
@@ -182,18 +207,25 @@ namespace GlowyBraceletMod
         {
             public Vector3 posSuit, pos;
             public float scaleSuit, scale;
+            public bool isOnLeft;
 
             public void Start()
             {
+                if (isOnLeft) VisibilityChangedL += OnVisibilityChanged;
+                else VisibilityChangedR += OnVisibilityChanged;
                 GlobalMessenger.AddListener("SuitUp", new Callback(OnSuitUp));
                 GlobalMessenger.AddListener("RemoveSuit", new Callback(OnSuitOff));
             }
 
             public void OnDestroy()
             {
+                if (isOnLeft) VisibilityChangedL -= OnVisibilityChanged;
+                else VisibilityChangedR -= OnVisibilityChanged;
                 GlobalMessenger.RemoveListener("SuitUp", new Callback(OnSuitUp));
                 GlobalMessenger.RemoveListener("RemoveSuit", new Callback(OnSuitOff));
             }
+
+            public void OnVisibilityChanged(bool nowVisible) { foreach (Transform child in transform) child.gameObject.layer = LayerMask.NameToLayer(nowVisible ? "Default" : "VisibleToProbe"); }
 
             public void OnSuitUp() { UpdatePosition(true); }
 
