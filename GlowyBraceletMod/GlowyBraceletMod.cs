@@ -1,5 +1,5 @@
 ﻿using OWML.ModHelper;
-using System.Collections;
+//using System.Collections;
 using System.Linq;
 using UnityEngine;
 
@@ -30,18 +30,18 @@ namespace GlowyBraceletMod
         };
 
         //VR stuff
-        private bool vREnabled;
+        /*private bool vREnabled;
         private Transform[] parentTransformsVR;
         private (Vector3, Vector3)
             minMaxPosLFSuitVR = (new(-0.004f, 0.001f, 0.012f), new(0.004f, 0.003f, -0.033f)),
             minMaxPosRTSuitVR = (new(0.004f, 0.001f, 0.012f), new(0.004f, 0.003f, -0.033f)),
             minMaxPosLFVR = (new(0.011f, 0.001f, 0.02f), new(-0.011f, 0.001f, -0.01f)),
-            minMaxPosRTVR = (new(-0.011f, 0.001f, 0.02f), new(-0.011f, 0.001f, -0.01f));
+            minMaxPosRTVR = (new(-0.011f, 0.001f, 0.02f), new(-0.011f, 0.001f, -0.01f));*/
 
 
         private void Start()
         {
-            vREnabled = ModHelper.Interaction.ModExists("Raicuparta.NomaiVR");
+            //vREnabled = ModHelper.Interaction.ModExists("Raicuparta.NomaiVR");
 
             var bundle = ModHelper.Assets.LoadBundle("Assets/rave_bundle");
             braceletPrefab = bundle.LoadAsset<GameObject>("Assets/GlowstickAssets/bracelet.prefab");
@@ -57,7 +57,7 @@ namespace GlowyBraceletMod
                 prompt ??= new ScreenPrompt(InputLibrary.interact, "<CMD> " + "Make Bracelet");
                 glowyMaterial ??= Resources.FindObjectsOfTypeAll<Material>().FirstOrDefault(obj => obj.name == "Props_HEA_BlueLightbulb_mat");
                 parentTransforms = GameObject.Find("Player_Body").GetComponentsInChildren<Transform>().Where(obj => obj.gameObject.name.Contains("_Arm_Elbow_Jnt")).ToArray();
-                if (vREnabled) StartCoroutine(FindVRHands());
+                //if (vREnabled) StartCoroutine(FindVRHands());
 
                 var crate = Instantiate(cratePrefab);
                 crate.transform.SetParent(GameObject.Find("Module_Supplies").transform);
@@ -93,20 +93,10 @@ namespace GlowyBraceletMod
             }
         }
 
-        private IEnumerator FindVRHands()
-        {
-            yield return null;
-            parentTransformsVR = new[] 
-            { 
-                GameObject.Find("VrLeftHand").transform.Find("skeletal_hand(Clone)"), 
-                GameObject.Find("VrRightHand").transform.Find("skeletal_hand(Clone)") 
-            };
-        }
-
         private void AddBracelet()
         {
             var armIndex = Random.Range(0, parentTransforms.Length);
-            var slide = Random.Range(0f, vREnabled ? 0.3f : 1f);
+            var slide = Random.Range(0f, 1f); //var slide = Random.Range(0f, vREnabled ? 0.3f : 1f);
             var maxTilt = ((slide < 0.15f) ? 0.5f : 1) * maxTiltAngle;
             var maxOffset = ((slide < 0.15f) ? 0.5f : 1) * maxCenterOffset;
 
@@ -136,13 +126,25 @@ namespace GlowyBraceletMod
             bracelet.transform.Find("glowy").gameObject.GetComponent<MeshRenderer>().material = glowyMaterial;
             bracelet.transform.GetComponentInChildren<OWEmissiveRenderer>().SetEmissionColor(colour);
 
-            if (vREnabled) AddVRBracelet(bracelet, isOnLeft, slide, offset, colour);
+            //if (vREnabled) AddVRBracelet(bracelet, isOnLeft, slide, offset, colour);
 
             if (!glowing)
             {
                 Instantiate(glowPrefab, GameObject.Find("Player_Body").transform);
                 glowing = true;
             }
+        }
+
+
+        //VR Stuff
+        /*private IEnumerator FindVRHands()
+        {
+            yield return null;
+            parentTransformsVR = new[] 
+            { 
+                GameObject.Find("VrLeftHand").transform.Find("skeletal_hand(Clone)"), 
+                GameObject.Find("VrRightHand").transform.Find("skeletal_hand(Clone)") 
+            };
         }
 
         private void AddVRBracelet(GameObject bracelet, bool isOnLeft, float slide, Vector3 offset, Color colour)
@@ -172,7 +174,9 @@ namespace GlowyBraceletMod
 
             braceletVR.transform.Find("glowy").gameObject.GetComponent<MeshRenderer>().material = glowyMaterial;
             braceletVR.transform.GetComponentInChildren<OWEmissiveRenderer>().SetEmissionColor(colour);
-        }
+
+            bracelet.layer = LayerMask.NameToLayer("VisibleToProbe");
+        }*/
 
         private class GlowyBracelet : MonoBehaviour
         {
